@@ -1,0 +1,10 @@
+{
+  "name": "timetable-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "4D Smart Timetable PWA",
+  "scripts": {
+    "build": "echo 'Static app: no build needed'",
+    "start": "node server.js"
+  }
+}

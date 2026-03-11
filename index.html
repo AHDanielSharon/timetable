@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>4D Smart Timetable</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-glow"></div>
+    <main class="app-shell">
+      <header class="topbar glass">
+        <div>
+          <h1>4D Smart Timetable</h1>
+          <p class="muted">MVJ College · CSE · Even Semester 2025-26</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="installBtn" class="btn" hidden>Install App</button>
+          <button id="notifyBtn" class="btn btn-accent">Enable Notifications</button>
+        </div>
+      </header>
+
+      <section class="status-grid">
+        <article class="glass status-card">
+          <h2>Now Showing</h2>
+          <p id="currentSubject" class="subject">Outside class hours</p>
+          <p id="currentTime" class="meta">8:00 AM to 3:20 PM only</p>
+        </article>
+        <article class="glass status-card">
+          <h2>Next Period</h2>
+          <p id="nextSubject" class="subject">--</p>
+          <p id="nextTime" class="meta">--</p>
+        </article>
+      </section>
+
+      <p id="bgHint" class="muted bg-hint">Enable notifications for automatic period updates.</p>
+
+      <section class="glass timetable-wrap">
+        <h2>Weekly Timetable (Subject names)</h2>
+        <div class="table-scroll">
+          <table id="timetable"></table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

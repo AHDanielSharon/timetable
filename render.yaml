@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: timetable-pwa
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm start
+    autoDeploy: true
