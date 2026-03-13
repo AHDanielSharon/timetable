@@ -77,3 +77,5 @@ td.empty { color: #6f92a7; }
   .app-shell { padding: 14px; }
   .topbar { align-items: flex-start; flex-direction: column; }
 }
+
+.bg-hint { margin: 8px 2px 16px; }

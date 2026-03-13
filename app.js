@@ -13,66 +13,12 @@ const periods = [
 ];
 
 const weekly = {
-  MONDAY: {
-    1: 'Graph Theory',
-    2: 'Free',
-    3: 'ADAA Lab (B1) / DMS Lab (B2)',
-    4: 'Free',
-    5: 'Analysis & Design of Algorithms',
-    6: 'Microcontrollers',
-    7: 'Database Management Systems',
-    8: 'Free'
-  },
-  TUESDAY: {
-    1: 'Microcontrollers (B2) / Database Management Systems (B1)',
-    2: 'Microcontrollers (B2) / Database Management Systems (B1)',
-    3: 'Database Management Systems',
-    4: 'Database Management Systems',
-    5: 'Analysis & Design of Algorithms',
-    6: 'AEC Vertical Level 2',
-    7: 'AEC Vertical Level 2',
-    8: 'Additional Mathematics-II'
-  },
-  WEDNESDAY: {
-    1: 'Yoga',
-    2: 'Yoga',
-    3: 'Biology for Engineers',
-    4: 'Graph Theory',
-    5: 'Microcontrollers (R)',
-    6: 'Counselling',
-    7: 'Microcontrollers',
-    8: 'Free'
-  },
-  THURSDAY: {
-    1: 'Microcontrollers',
-    2: 'Free',
-    3: 'Analysis & Design of Algorithms',
-    4: 'Biology for Engineers',
-    5: 'Database Management Systems (R)',
-    6: 'Microcontrollers (B2) / ADAA Lab (B1)',
-    7: 'Microcontrollers (B2) / ADAA Lab (B1)',
-    8: 'Additional Mathematics-II'
-  },
-  FRIDAY: {
-    1: 'Database Management Systems',
-    2: 'Library',
-    3: 'Analysis & Design of Algorithms',
-    4: 'Graph Theory',
-    5: 'Graph Theory (R)',
-    6: 'Free',
-    7: 'Universal Human Values Course',
-    8: 'Free'
-  },
-  SATURDAY: {
-    1: 'Free',
-    2: 'Free',
-    3: 'Free',
-    4: 'Free',
-    5: 'Free',
-    6: 'Free',
-    7: 'Free',
-    8: 'Free'
-  }
+  MONDAY: { 1: 'Graph Theory', 2: 'Free', 3: 'ADAA Lab (B1) / DMS Lab (B2)', 4: 'Free', 5: 'Analysis & Design of Algorithms', 6: 'Microcontrollers', 7: 'Database Management Systems', 8: 'Free' },
+  TUESDAY: { 1: 'Microcontrollers (B2) / Database Management Systems (B1)', 2: 'Microcontrollers (B2) / Database Management Systems (B1)', 3: 'Database Management Systems', 4: 'Database Management Systems', 5: 'Analysis & Design of Algorithms', 6: 'AEC Vertical Level 2', 7: 'AEC Vertical Level 2', 8: 'Additional Mathematics-II' },
+  WEDNESDAY: { 1: 'Yoga', 2: 'Yoga', 3: 'Biology for Engineers', 4: 'Graph Theory', 5: 'Microcontrollers (R)', 6: 'Counselling', 7: 'Microcontrollers', 8: 'Free' },
+  THURSDAY: { 1: 'Microcontrollers', 2: 'Free', 3: 'Analysis & Design of Algorithms', 4: 'Biology for Engineers', 5: 'Database Management Systems (R)', 6: 'Microcontrollers (B2) / ADAA Lab (B1)', 7: 'Microcontrollers (B2) / ADAA Lab (B1)', 8: 'Additional Mathematics-II' },
+  FRIDAY: { 1: 'Database Management Systems', 2: 'Library', 3: 'Analysis & Design of Algorithms', 4: 'Graph Theory', 5: 'Graph Theory (R)', 6: 'Free', 7: 'Universal Human Values Course', 8: 'Free' },
+  SATURDAY: { 1: 'Free', 2: 'Free', 3: 'Free', 4: 'Free', 5: 'Free', 6: 'Free', 7: 'Free', 8: 'Free' }
 };
 
 const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
@@ -83,51 +29,44 @@ const nextSubjectEl = document.getElementById('nextSubject');
 const nextTimeEl = document.getElementById('nextTime');
 const notifyBtn = document.getElementById('notifyBtn');
 const installBtn = document.getElementById('installBtn');
+const bgHintEl = document.getElementById('bgHint');
 
 let lastNotifiedKey = '';
 let deferredInstallPrompt = null;
+let boundaryTimer = null;
 
 buildTable();
-startTicker();
 setupInstallPrompt();
 setupNotificationPermission();
 registerServiceWorker();
+startTicker();
 
 function buildTable() {
   const thead = document.createElement('thead');
   const hRow = document.createElement('tr');
   hRow.innerHTML = '<th>Day</th>';
-
   periods.forEach((slot) => {
     const th = document.createElement('th');
     th.innerHTML = `${slot.label}<br><small>${slot.time}</small>`;
     hRow.appendChild(th);
   });
-
   thead.appendChild(hRow);
 
   const tbody = document.createElement('tbody');
-
   Object.entries(weekly).forEach(([day, schedule]) => {
     const row = document.createElement('tr');
-    const dayCell = document.createElement('td');
-    dayCell.className = 'day';
-    dayCell.textContent = day;
-    row.appendChild(dayCell);
-
+    row.innerHTML = `<td class="day">${day}</td>`;
     periods.forEach((slot) => {
       const td = document.createElement('td');
       if (slot.isBreak) {
         td.textContent = slot.label.toUpperCase();
         td.className = 'break';
       } else {
-        const subject = schedule[slot.id] || 'Free';
-        td.textContent = subject;
-        if (subject === 'Free') td.classList.add('empty');
+        td.textContent = schedule[slot.id] || 'Free';
+        if (td.textContent === 'Free') td.className = 'empty';
       }
       row.appendChild(td);
     });
-
     tbody.appendChild(row);
   });
 
@@ -143,17 +82,13 @@ function getCurrentSlot(now = new Date()) {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const day = dayNames[now.getDay()];
   const schedule = weekly[day];
-
   const dayStart = toMinutes('08:00');
   const dayEnd = toMinutes('15:20');
 
-  if (!schedule || currentMinutes < dayStart || currentMinutes >= dayEnd) {
-    return { active: null, next: null, day };
-  }
+  if (!schedule || currentMinutes < dayStart || currentMinutes >= dayEnd) return { active: null, next: null, day };
 
   let active = null;
   let next = null;
-
   for (let i = 0; i < periods.length; i += 1) {
     const slot = periods[i];
     const [start, end] = slot.time.split('-').map(toMinutes);
@@ -162,12 +97,7 @@ function getCurrentSlot(now = new Date()) {
       next = periods[i + 1] || null;
       break;
     }
-    if (currentMinutes < start) {
-      next = slot;
-      break;
-    }
   }
-
   return { active, next, day, schedule };
 }
 
@@ -179,7 +109,6 @@ function subjectFor(slot, schedule) {
 
 function updateStatus() {
   const { active, next, day, schedule } = getCurrentSlot();
-
   if (!schedule || !active) {
     currentSubjectEl.textContent = 'Outside class hours';
     currentTimeEl.textContent = `${day} · Notifications active only 8:00 AM - 3:20 PM`;
@@ -201,28 +130,75 @@ function updateStatus() {
 
 function startTicker() {
   updateStatus();
-  setInterval(updateStatus, 10000);
+  setInterval(updateStatus, 30000);
+  scheduleBoundaryRefresh();
+}
+
+function scheduleBoundaryRefresh() {
+  if (boundaryTimer) clearTimeout(boundaryTimer);
+  const now = new Date();
+  const boundaryTimes = periods.map((p) => p.time.split('-')[0]);
+  let nextBoundary = null;
+
+  for (const hhmm of boundaryTimes) {
+    const [h, m] = hhmm.split(':').map(Number);
+    const candidate = new Date(now);
+    candidate.setHours(h, m, 0, 0);
+    if (candidate > now) {
+      nextBoundary = candidate;
+      break;
+    }
+  }
+
+  if (!nextBoundary) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    tomorrow.setHours(8, 0, 0, 0);
+    nextBoundary = tomorrow;
+  }
+
+  const delay = Math.max(1000, nextBoundary.getTime() - now.getTime() + 250);
+  boundaryTimer = setTimeout(() => {
+    updateStatus();
+    scheduleBoundaryRefresh();
+  }, delay);
 }
 
 function setupNotificationPermission() {
   notifyBtn.addEventListener('click', async () => {
-    if (!('Notification' in window)) {
-      alert('Notifications are not supported in this browser.');
-      return;
-    }
-
+    if (!('Notification' in window)) return alert('Notifications are not supported in this browser.');
     const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      notifyBtn.textContent = 'Notifications Enabled';
-      notifyBtn.disabled = true;
-      updateStatus();
-    }
+    if (permission !== 'granted') return;
+
+    notifyBtn.textContent = 'Notifications Enabled';
+    notifyBtn.disabled = true;
+    updateStatus();
+    await setupBackgroundNotificationSync();
   });
 
   if ('Notification' in window && Notification.permission === 'granted') {
     notifyBtn.textContent = 'Notifications Enabled';
     notifyBtn.disabled = true;
+    setupBackgroundNotificationSync();
   }
+}
+
+async function setupBackgroundNotificationSync() {
+  if (!('serviceWorker' in navigator)) return;
+  const registration = await navigator.serviceWorker.ready;
+  registration.active?.postMessage({ type: 'SET_SCHEDULE', payload: { periods, weekly, dayNames } });
+
+  if ('periodicSync' in registration) {
+    try {
+      await registration.periodicSync.register('timetable-period-check', { minInterval: 15 * 60 * 1000 });
+      bgHintEl.textContent = 'Background sync enabled (supported browsers) for app-closed updates.';
+      return;
+    } catch {
+      // fallback note below
+    }
+  }
+
+  bgHintEl.textContent = 'Exact auto-updates work while app is running. App-closed updates depend on browser support.';
 }
 
 async function maybeNotify(subject, timeRange, day, slotId) {
@@ -240,8 +216,6 @@ async function maybeNotify(subject, timeRange, day, slotId) {
       tag: key,
       renotify: true
     });
-  } else {
-    new Notification(`Now: ${subject}`, { body: `${day} · ${timeRange}` });
   }
 }
 
@@ -262,11 +236,10 @@ function setupInstallPrompt() {
 }
 
 async function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    try {
-      await navigator.serviceWorker.register('./sw.js');
-    } catch {
-      // silent failure
-    }
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('./sw.js');
+  } catch {
+    bgHintEl.textContent = 'Service worker failed to register.';
   }
 }
